@@ -54,11 +54,25 @@ complete <- function(directory, id = 1:332) {
   # Take our list of dataframes and munge them into one, big dataframe
   dataFrame <- data.frame(Reduce(rbind, csvList))
   
+  # Boolean Vector of complete rows
   completeCases <- complete.cases(dataFrame)
   
-  completes <- dataFrame[completeCases]
+  # Subset of dataFrame with only complete rows
+  completes <- dataFrame[completeCases,]
   
-  print(completes)
+  groupList <- list()
+
+  for(i in id) {
+    grouped <- completes[completes$ID == i, ]
+
+    groupList[[i]] <- c(i, nrow(grouped))
+  }
+  
+  groupFrame <- data.frame(Reduce(rbind, groupList),
+                           row.names=NULL)
+  colnames(groupFrame) <- c("ID", "nobs")
+  
+  print(groupFrame)
 }
 
 
