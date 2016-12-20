@@ -1,125 +1,58 @@
 pollutantmean <- function(directory, pollutant, id = 1:332) {
-<<<<<<< HEAD
-        
-        for(i in id) {
-          csvFile <- paste(getwd(), "/", directory, "/", i, ".csv", sep = "")
-          print(csvFile)
-        }
-        
-}
-=======
+
+  # Empty vector for results
+  results <- list(sulfate=numeric(), nitrate=numeric())
   
+  # Initialise start and end at 0
+  start.sulfate <- start.nitrate <- end.sulfate <- end.nitrate <- 0
+  
+  # First section: Read in the selected csv files and make a list of dataframes
   # Full list of files in our data directory
   files <- list.files(directory)
   
-  # Empty list for the csv files to be read into
-  csvList <- list()
+  # Subset of files we're interested in
+  selectedFiles <- files[id]
   
-  # Don't think I actually need this
-  colNames <- c("Date","sulfate","nitrate","ID")
+  # Empty list for our dataframes
+  frames <- list()
   
-  # Loop through files that match "id" and read them in
-  # Then, pop them all in the list we initialised earlier
-  for(f in files[id]) {
-    csv <- read.csv(paste(getwd(), "/", directory, "/", f, sep = ""),
-                    na.strings = "NA")
-    csvList[[f]] <- csv
+  for(index in seq_along(selectedFiles)) {
+
+    csv <- read.csv(paste(getwd(), "/",
+                          directory, "/", 
+                          selectedFiles[[index]], 
+                          sep = ""),
+                          na.strings = "NA")
+    
+    frames[[index]] <- csv
     
   }
   
+  # Second section: Rip out individual series from the frames and make a big
+  # Dataframe from them
+  for(index in seq_along(frames)) {
+    
+    values <- frames[[index]]
+    size.sulfate <- length(values$sulfate)
+    size.nitrate <- length(values$nitrate)
+    
+    if(size.sulfate > 0) {
+      start.sulfate <- end.sulfate + 1
+      end.sulfate <- start.sulfate + size.sulfate - 1
+      results$sulfate[start.sulfate:end.sulfate] <- values$sulfate
+    }
+    if(size.nitrate > 0) {
+      start.nitrate <- end.nitrate + 1
+      end.nitrate <- start.nitrate + size.nitrate - 1
+      results$nitrate[start.nitrate:end.nitrate] <- values$nitrate
+    }
+  }
   
-  # Take our list of dataframes and munge them into one, big dataframe
-  dataFrame <- data.frame(Reduce(rbind, csvList))
+  results <- data.frame(sulfate=unlist(results$sulfate), nitrate=unlist(results$nitrate))
   
-  # Extract the column we're interested in
-  pollutantVec <- dataFrame[pollutant]
+  mu <- colMeans(results, na.rm = TRUE)
   
-  # Compute the mean, disregarding NAs
-  mu <- colMeans(pollutantVec, na.rm = TRUE)
-  
-  mu
-  
+  mu[pollutant]
+
 }
 
-complete <- function(directory, id = 1:332) {
-  # Full list of files in our data directory
-  files <- list.files(directory)
-  
-  # Empty list for the csv files to be read into
-  csvList <- list()
-  
-  # Loop through files that match "id" and read them in
-  # Then, pop them all in the list we initialised earlier
-  for(f in files[id]) {
-    csv <- read.csv(paste(getwd(), "/", directory, "/", f, sep = ""),
-                    na.strings = "NA")
-    csvList[[f]] <- csv
-    
-  }
-  
-  
-  # Take our list of dataframes and munge them into one, big dataframe
-  dataFrame <- data.frame(Reduce(rbind, csvList))
-  
-  # Boolean Vector of complete rows
-  completeCases <- complete.cases(dataFrame)
-  
-  # Subset of dataFrame with only complete rows
-  completes <- dataFrame[completeCases,]
-  
-  groupList <- list()
-  
-  for(i in id) {
-    grouped <- completes[completes$ID == i, ]
-    
-    groupList[[i]] <- c(i, nrow(grouped))
-  }
-  
-  groupFrame <- data.frame(Reduce(rbind, groupList),
-                           row.names=NULL)
-  
-  colnames(groupFrame) <- c("id", "nobs")
-  
-  groupFrame
-}
-
-
-corr <- function(directory, threshold = 0) {
-  # Full list of files in our data directory
-  files <- list.files(directory)
-  
-  # Empty list for the csv files to be read into
-  csvList <- list()
-  
-  # Loop through files that match "id" and read them in
-  # Then, pop them all in the list we initialised earlier
-  for(f in files) {
-    csv <- read.csv(paste(getwd(), "/", directory, "/", f, sep = ""),
-                    na.strings = "NA")
-    csvList[[f]] <- csv
-    
-  }
-  
-  # Take our list of dataframes and munge them into one, big dataframe
-  dataFrame <- data.frame(Reduce(rbind, csvList))
-  
-  # Boolean Vector of complete rows
-  completeCases <- complete.cases(dataFrame)
-  
-  # Subset of dataFrame with only complete rows
-  completes <- dataFrame[completeCases,]
-  
-  completeCounts <- complete("specdata")
-  
-  overThreshold <- completeCounts[completeCounts$nobs > threshold,]
-  
-  for(o in overThreshold) {
-    print(o)
-  }
-}
-
-
-
-
-
->>>>>>> 86cc71675504b53800178db35e4077c8cbd495fe
