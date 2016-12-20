@@ -1,41 +1,80 @@
 complete <- function(directory, id = 1:332) {
+  
+  # Empty vector for results
+  results <- list(sulfate=numeric(), nitrate=numeric(), id=numeric)
+  
+  # Initialise start and end at 0
+  start.sulfate <- start.nitrate <- start.id <- 
+    end.sulfate <- end.nitrate <- end.id <- 0
+  
+  # First section: Read in the selected csv files and make a list of dataframes
   # Full list of files in our data directory
   files <- list.files(directory)
   
-  # Empty list for the csv files to be read into
-  csvList <- list()
+  # Subset of files we're interested in
+  selectedFiles <- files[id]
   
-  # Loop through files that match "id" and read them in
-  # Then, pop them all in the list we initialised earlier
-  for(f in files[id]) {
-    csv <- read.csv(paste(getwd(), "/", directory, "/", f, sep = ""),
+  # Empty list for our dataframes
+  frames <- list()
+  
+  for(index in seq_along(selectedFiles)) {
+    
+    csv <- read.csv(paste(getwd(), "/",
+                          directory, "/", 
+                          selectedFiles[[index]], 
+                          sep = ""),
                     na.strings = "NA")
-    csvList[[f]] <- csv
+    
+    frames[[index]] <- csv
     
   }
   
+  # Second section: Rip out individual series from the frames and make a big
+  # Dataframe from them
+  for(index in seq_along(frames)) {
+    
+    values <- frames[[index]]
+    size.sulfate <- length(values$sulfate)
+    size.nitrate <- length(values$nitrate)
+    size.id <- length(values$ID)
+    
+    if(size.sulfate > 0) {
+      start.sulfate <- end.sulfate + 1
+      end.sulfate <- start.sulfate + size.sulfate - 1
+      results$sulfate[start.sulfate:end.sulfate] <- values$sulfate
+    }
+    if(size.nitrate > 0) {
+      start.nitrate <- end.nitrate + 1
+      end.nitrate <- start.nitrate + size.nitrate - 1
+      results$nitrate[start.nitrate:end.nitrate] <- values$nitrate
+    }
+    if(size.id > 0) {
+      start.id <- end.id + 1
+      end.id <- start.id + size.id - 1
+      results$ID[start.id:end.id] <- values$ID
+    }
+  }
   
-  # Take our list of dataframes and munge them into one, big dataframe
-  dataFrame <- data.frame(Reduce(rbind, csvList))
+  results <- data.frame(sulfate=unlist(results$sulfate), 
+                        nitrate=unlist(results$nitrate),
+                        id=unlist(results$ID))
   
-  # Boolean Vector of complete rows
-  completeCases <- complete.cases(dataFrame)
+  # Boolean vector where TRUE = complete set of results:
+  completeBool <- complete.cases(results)
   
-  # Subset of dataFrame with only complete rows
-  completes <- dataFrame[completeCases,]
+  completeCases <- results[completeBool, ]
   
-  groupList <- list()
+  obsCount <- list()
   
   for(i in id) {
-    grouped <- completes[completes$ID == i, ]
     
-    groupList[[i]] <- c(i, nrow(grouped))
+    obsCount$id[i:i] <- i
+    obsCount$nobs[i:i] <-  nrow(completeCases[completeCases$id == i, ])
   }
   
-  groupFrame <- data.frame(Reduce(rbind, groupList),
-                           row.names=NULL)
+  completeTally <- data.frame(id=unlist(obsCount$id),
+                              nobs=unlist(obsCount$nobs))
   
-  colnames(groupFrame) <- c("id", "nobs")
-  
-  groupFrame
+  completeTally
 }
+

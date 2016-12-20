@@ -48,7 +48,8 @@ pollutantmean <- function(directory, pollutant, id = 1:332) {
     }
   }
   
-  results <- data.frame(sulfate=unlist(results$sulfate), nitrate=unlist(results$nitrate))
+  results <- data.frame(sulfate=unlist(results$sulfate), 
+                        nitrate=unlist(results$nitrate))
   
   mu <- colMeans(results, na.rm = TRUE)
   
