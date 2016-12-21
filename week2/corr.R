@@ -25,9 +25,9 @@ corr <- function(directory, threshold = 0) {
   
   completeCounts <- complete("specdata")
   
-  overThreshold <- completeCounts[completeCounts$nobs > threshold,]
+  overThreshold <- completeCounts[completeCounts$nobs > threshold, 1]
   
-  for(o in overThreshold) {
-    print(o)
-  }
+  overBool <- completes[completes$ID %in% overThreshold,]
+  
+  print(overBool)
 }
